@@ -1,0 +1,66 @@
+plugins {
+    id 'java'
+}
+
+group = 'com.example'
+version = '1.0'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+tasks.register('runServer5', JavaExec) {
+    group = "run"
+    description = "Run server with periodic verification = 5s"
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = "com.example.server.ServerMain"
+    systemProperties = [
+            "port"       : "5050",
+            "p"          : "10",
+            "verifySec"  : "5",
+            "runSeconds" : "180",
+            "tPlataSec"  : "20",
+            "outDir"     : "output"
+    ]
+}
+
+tasks.register('runServer10', JavaExec) {
+    group = "run"
+    description = "Run server with periodic verification = 10s"
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = "com.example.server.ServerMain"
+    systemProperties = [
+            "port"       : "5050",
+            "p"          : "10",
+            "verifySec"  : "10",
+            "runSeconds" : "180",
+            "tPlataSec"  : "20",
+            "outDir"     : "output"
+    ]
+}
+
+tasks.register('runClients', JavaExec) {
+    group = "run"
+    description = "Run 10 clients that generate bookings every 2 seconds"
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = "com.example.client.ClientMain"
+    systemProperties = [
+            "host"    : "127.0.0.1",
+            "port"    : "5050",
+            "clients" : "10"
+    ]
+}
