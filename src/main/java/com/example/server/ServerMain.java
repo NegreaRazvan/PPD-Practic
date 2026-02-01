@@ -19,7 +19,7 @@ public class ServerMain {
         ExecutorService workerPool = Executors.newFixedThreadPool(p);
         ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
 
-        ClinicService service = new ClinicService(tPlataSec, scheduler, outDir);
+        ClinicService service = new ClinicService(tPlataSec, verifySec, scheduler, outDir);
         service.startPeriodicVerification(verifySec);
 
         try (ServerSocket serverSocket = new ServerSocket(port)) {

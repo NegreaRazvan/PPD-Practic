@@ -13,9 +13,11 @@ import java.util.concurrent.locks.ReentrantLock;
 public class Storage {
     private final Path baseDir;
     private final Lock fileLock = new ReentrantLock();
+    private final String eventsFile;
 
-    public Storage(String dir) {
+    public Storage(String dir, int verifySec) {
         this.baseDir = Paths.get(dir);
+        this.eventsFile = "events_" + verifySec + "s.txt";
         try { Files.createDirectories(baseDir); } catch (IOException ignored) {}
     }
 
@@ -38,8 +40,8 @@ public class Storage {
                         p.id(), p.date().toEpochMilli(), p.cnp(), p.suma()));
     }
 
-    public void appendEvent(String fileName, String line) {
-        appendLine(fileName, line);
+    public void appendEvent(String line) {
+        appendLine(eventsFile, line);
     }
 
     public void appendVerification(VerificationReport rep, int verifySec) {

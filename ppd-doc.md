@@ -199,25 +199,89 @@ Thread-ul de rețea rămâne liber, iar procesarea cererii se face în **worker 
 
 ---
 
-## 6. Analiza performanței și concluzii
+## 6. Concluzii privind performanța
 
-### 6.1 Analiza performanței
+### 6.1 Throughput
 
-Metricile relevante sunt:
+În ambele rulări, aplicația a obținut un throughput stabil și foarte apropiat ca valoare:
 
-- latența medie a cererilor **BOOK** și **PAY**;
-- throughput-ul (cereri/secundă);
-- impactul auditului asupra performanței.
+- **Audit 5s:** ~**7.39 cereri/secundă**
+- **Audit 10s:** ~**7.42 cereri/secundă**
 
-Utilizarea thread pool-ului și a execuției asincrone permite procesarea eficientă a cererilor sub concurență ridicată.
+Diferența dintre cele două configurații este nesemnificativă, ceea ce indică faptul că
+frecvența auditului (5s vs 10s) **nu influențează semnificativ capacitatea de procesare**
+a serverului în configurația testată (10 clienți, p = 10 thread-uri).
 
 ---
 
-### 6.2 Concluzie
+### 6.2 Timpi medii de răspuns
 
-Aplicația demonstrează:
+Pentru majoritatea cererilor, latențele sunt foarte reduse:
 
-- o arhitectură **client–server TCP** clar structurată;
-- folosirea corectă a programării concurente;
-- utilizarea mecanismelor **Future** și **thread pool**;
-- implementarea unui **audit periodic** funcțional.
+- **BOOK**
+    - p50 ≈ 0.7 ms
+    - p95 ≈ 1.5–2.1 ms
+    - latență medie ≈ 1.38–1.41 ms
+
+- **PAY**
+    - p50 ≈ 0.7–0.8 ms
+    - p95 ≈ 1.4–1.7 ms
+    - latență medie ≈ 0.88–0.97 ms
+
+- **CANCEL**
+    - p50 ≈ 0.68–0.83 ms
+    - p95 ≈ 1.94–2.10 ms
+    - latență medie ≈ 1.03–1.19 ms
+
+Aceste valori arată că, în condiții normale, serverul răspunde în **sub 2 ms**
+pentru majoritatea cererilor, confirmând eficiența utilizării
+**thread pool-ului** și a execuției asincrone prin **CompletableFuture**.
+
+---
+
+### 6.3 Tail latency și variații
+
+Deși latențele medii sunt mici, pentru operația **BOOK** apare un fenomen de
+**tail latency** pronunțat:
+
+- p99 ≈ **39–43 ms**
+- max ≈ **46–48 ms**
+
+Acest comportament indică faptul că, rar, unele cereri BOOK sunt întârziate semnificativ,
+probabil din cauza:
+- competiției pe lock-uri,
+- cozii din thread pool,
+- rulării auditului,
+- sau planificării thread-urilor de către sistemul de operare.
+
+Operația **PAY** este mult mai stabilă din acest punct de vedere, având:
+- p99 între **2.49 ms și 5.70 ms**,
+- valori maxime sub **13 ms**.
+
+---
+
+### 6.4 Impactul intervalului de audit
+
+Comparând rulările cu audit la 5s și la 10s, se observă că:
+
+- throughput-ul rămâne practic identic;
+- auditul la 10s tinde să producă ușor mai puține variații pentru PAY;
+- diferențele de latență sunt minore și nu afectează comportamentul general al sistemului.
+
+Astfel, alegerea intervalului de audit reprezintă un compromis între
+**granularitatea informațiilor** și **overhead-ul de procesare**, fără impact major
+asupra performanței globale în acest scenariu.
+
+---
+
+### 6.5 Concluzie finală
+
+Aplicația demonstrează un comportament performant și stabil sub concurență:
+- throughput constant (~7.4 cereri/secundă);
+- latențe medii foarte mici (sub 2 ms);
+- utilizare eficientă a execuției asincrone cu **Future** și **thread pool**.
+
+Prezența tail latency pentru BOOK este normală într-un sistem concurent și
+reprezintă un punct potențial de optimizare, fără a compromite corectitudinea
+sau stabilitatea aplicației.
+

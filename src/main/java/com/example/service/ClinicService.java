@@ -30,6 +30,7 @@ public class ClinicService {
 
     private final ScheduledExecutorService scheduler;
     private final int tPlataSec;
+    private final int verifySec;
     private final Storage storage;
 
     private final AtomicLong idGen = new AtomicLong(1);
@@ -41,10 +42,11 @@ public class ClinicService {
     private final int[] durationsMin = {120, 20, 30, 60, 30};
     private final int[][] cap; // cap[loc][tr] 1-based
 
-    public ClinicService(int tPlataSec, ScheduledExecutorService scheduler, String outDir) {
+    public ClinicService(int tPlataSec, int verifySec, ScheduledExecutorService scheduler, String outDir) {
         this.tPlataSec = tPlataSec;
+        this.verifySec = verifySec;
         this.scheduler = scheduler;
-        this.storage = new Storage(outDir);
+        this.storage = new Storage(outDir, verifySec);
         this.cap = buildCapacities();
     }
 
@@ -160,7 +162,7 @@ public class ClinicService {
 
             if (Instant.now().isAfter(r.payDeadline)) {
                 r.status = Status.EXPIRATA;
-                storage.appendEvent("events.txt", "EXPIRE_BY_PAY|" + id + "|" + Instant.now().toEpochMilli());
+                storage.appendEvent("EXPIRE_BY_PAY|" + id + "|" + Instant.now().toEpochMilli());
                 return "PAY_FAIL|expired";
             }
 
@@ -198,7 +200,7 @@ public class ClinicService {
             storage.appendRefund(refund);
 
             r.status = Status.ANULATA;
-            storage.appendEvent("events.txt", "CANCEL|" + id + "|" + Instant.now().toEpochMilli());
+            storage.appendEvent("CANCEL|" + id + "|" + Instant.now().toEpochMilli());
 
             return "CANCEL_OK|" + id + "|" + suma;
         } finally {
@@ -214,7 +216,7 @@ public class ClinicService {
             Reservation r = reservations.get(id);
             if (r != null && r.status == Status.REZERVARE && Instant.now().isAfter(r.payDeadline)) {
                 r.status = Status.EXPIRATA;
-                storage.appendEvent("events.txt", "EXPIRE|" + id + "|" + Instant.now().toEpochMilli());
+                storage.appendEvent("EXPIRE|" + id + "|" + Instant.now().toEpochMilli());
             }
         } finally {
             rw.writeLock().unlock();
