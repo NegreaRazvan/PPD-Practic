@@ -2,11 +2,6 @@
 
 ## Clinică medicală – Programare, plată și audit
 
-**Raport scurt (2–4 pagini)**  
-Client–Server TCP | Programare concurentă | Future & Thread Pool
-
----
-
 ## 1. Analiza cerințelor
 
 ### 1.1 Tema
