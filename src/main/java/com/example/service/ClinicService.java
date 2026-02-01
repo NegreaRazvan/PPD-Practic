@@ -64,6 +64,11 @@ public class ClinicService {
     public void initiateShutdown() {
         shuttingDown = true;
         broadcast("SERVER_SHUTDOWN|Server closes now");
+
+        for (Socket s : clients) {
+            try { s.close(); } catch (Exception ignored) {}
+        }
+        clients.clear();
     }
 
     private void broadcast(String msg) {
@@ -278,4 +283,9 @@ public class ClinicService {
     private static boolean overlaps(LocalTime aStart, LocalTime aEnd, LocalTime bStart, LocalTime bEnd) {
         return aStart.isBefore(bEnd) && bStart.isBefore(aEnd);
     }
+
+    public boolean isShuttingDown() {
+        return shuttingDown;
+    }
+
 }

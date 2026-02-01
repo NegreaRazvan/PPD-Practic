@@ -40,9 +40,9 @@ public class ClientWorker implements Runnable {
                 long t0 = System.nanoTime();
                 out.println("BOOK|" + name + "|" + cnp + "|" + loc + "|" + tr + "|" + hhmm);
                 String resp = in.readLine();
+                if (resp.startsWith("BOOK_FAIL|server_shutting_down")) break;
                 long t1 = System.nanoTime();
 
-                if (resp == null) break;
                 if (resp.startsWith("SERVER_SHUTDOWN")) break;
 
                 // (optional) log timp raspuns client-side
@@ -79,7 +79,9 @@ public class ClientWorker implements Runnable {
 
                 Thread.sleep(2000);
             }
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            System.out.println("Client " + idx + " stopped: " + e.getMessage());
         }
+
     }
 }

@@ -6,6 +6,7 @@ import java.io.*;
 import java.net.Socket;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.RejectedExecutionException;
 
 public class ClientConnection implements Runnable {
     private final Socket socket;
@@ -29,17 +30,26 @@ public class ClientConnection implements Runnable {
                 String cmd = parts[0];
 
                 if ("BOOK".equals(cmd)) {
-                    // BOOK|nume|cnp|loc|tr|HH:MM
-                    CompletableFuture
-                            .supplyAsync(() -> service.book(
-                                    parts[1],
-                                    parts[2],
-                                    Integer.parseInt(parts[3]),
-                                    Integer.parseInt(parts[4]),
-                                    parts[5]
-                            ), workerPool)
-                            .thenAccept(out::println);
+                    if (service.isShuttingDown() || workerPool.isShutdown() || workerPool.isTerminated()) {
+                        out.println("BOOK_FAIL|server_shutting_down");
+                        continue;
+                    }
 
+                    try {
+                        CompletableFuture
+                                .supplyAsync(() -> service.book(
+                                        parts[1],
+                                        parts[2],
+                                        Integer.parseInt(parts[3]),
+                                        Integer.parseInt(parts[4]),
+                                        parts[5]
+                                ), workerPool)
+                                .exceptionally(ex -> "BOOK_FAIL|internal_error")
+                                .thenAccept(out::println);
+                    } catch (RejectedExecutionException rex) {
+                        out.println("BOOK_FAIL|server_shutting_down");
+                    }
+                    continue;
                 } else if ("PAY".equals(cmd)) {
                     // PAY|reservationId|cnp
                     String resp = service.pay(Long.parseLong(parts[1]), parts[2]);
